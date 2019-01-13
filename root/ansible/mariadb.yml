@@ -1,0 +1,25 @@
+- hosts: centos
+  tasks:
+   - name: pull mariadb image
+     docker_image:
+      name: mariadb
+      tag: 10.2.14
+   - name: Update mariadb image
+     docker_image:
+      name: mariadb_custom
+      tag: 10.2.14
+      path: /root/ansible
+      state: present
+   - name: start mariadb instance
+     docker_container:
+      name: testdb1
+      env_file: /root/ansible/mariadb.cnf.j2
+      image: mariadb_custom:10.2.14
+      state: started
+      restart_policy: unless-stopped
+   - pause:
+      seconds: 30
+   - name: Create mysql user
+     command: docker exec testdb1 bash -c /bin/createuser.sh
+   - name: Cleaning script
+     command: docker exec testdb1 bash -c 'rm /bin/createuser.sh; rm /bin/createuser.sql'
